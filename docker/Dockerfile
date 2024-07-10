@@ -10,14 +10,14 @@ RUN apk add --no-cache curl git openssh binutils gcc musl-dev
 COPY go.mod .
 COPY go.sum .
 
-# For development it's useful to have kaspad from filesystem, but for deployment
+# For development it's useful to have htnd from filesystem, but for deployment
 # we should use the one in github
 RUN go mod edit -dropreplace github.com/Hoosat-Oy/HTND
-ARG KASPAD_VERSION
-ARG KASPAD_REPOSITORY='github.com/Hoosat-Oy/HTND'
-RUN if [ -n "${KASPAD_VERSION}" ]; then \
+ARG HTND_VERSION
+ARG HTND_REPOSITORY='github.com/Hoosat-Oy/HTND'
+RUN if [ -n "${HTND_VERSION}" ]; then \
         # use replace instead of require - to propagate into nested dependancies \
-        go mod edit -replace "github.com/Hoosat-Oy/HTND=$KASPAD_REPOSITORY@$KASPAD_VERSION"; \
+        go mod edit -replace "github.com/Hoosat-Oy/HTND=$HTND_REPOSITORY@$HTND_VERSION"; \
     fi
 
 RUN go mod download
