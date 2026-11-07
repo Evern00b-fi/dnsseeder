@@ -89,7 +89,6 @@ func creep() {
 		}
 	}
 
-	var wgCreep sync.WaitGroup
 	for {
 		peers := amgr.Addresses()
 		if len(peers) == 0 && amgr.AddressCount() == 0 {
@@ -112,27 +111,22 @@ func creep() {
 			continue
 		}
 
+		// Poll one at a time, in the order given: the net adapter serializes
+		// connections anyway, and the order puts due re-checks of good nodes
+		// ahead of unchecked addresses.
 		for _, addr := range peers {
 			if atomic.LoadInt32(&systemShutdown) != 0 {
-				log.Infof("Waiting creep threads to terminate")
-				wgCreep.Wait()
 				log.Infof("Creep thread shutdown")
 				return
 			}
-			wgCreep.Add(1)
-			go func(addr *appmessage.NetAddress) {
-				defer wgCreep.Done()
-
-				err := pollPeer(netAdapter, addr)
-				if err != nil {
-					log.Debugf(err.Error())
-					if defaultSeeder != nil && addr == defaultSeeder {
-						panics.Exit(log, "failed to poll default seeder")
-					}
+			err := pollPeer(netAdapter, addr)
+			if err != nil {
+				log.Debugf(err.Error())
+				if defaultSeeder != nil && addr == defaultSeeder {
+					panics.Exit(log, "failed to poll default seeder")
 				}
-			}(addr)
+			}
 		}
-		wgCreep.Wait()
 	}
 }
 
